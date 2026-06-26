@@ -80,9 +80,7 @@
   #load .err { color:#ff8a8a; font-size:.8em; max-width:80%; text-align:center; display:none; }
 </style>
 
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
-</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
 </head>
 <body>
 
@@ -107,10 +105,12 @@
 <button id="btn-face">🔄<br>Obróć</button>
 <div id="bubble"></div>
 
-<script type="module">
-import * as THREE from 'three';
-
+<script>
 const $ = id => document.getElementById(id);
+if (typeof THREE === 'undefined') {
+  document.getElementById('load-err').style.display = 'block';
+  document.getElementById('load-err').textContent = 'Nie udało się wczytać silnika 3D. Sprawdź internet i odśwież stronę.';
+}
 const isTouch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in window);
 
 // ════════════════════════════════════════════
