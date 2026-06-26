@@ -1,0 +1,20 @@
+{
+  "name": "Emi i Lampart",
+  "short_name": "Emi i Lampart",
+  "description": "Agenci Mistrza Kotka — przygodowa gra oparta na wyborach",
+  "start_url": "/gra-dla-kotka/",
+  "scope": "/gra-dla-kotka/",
+  "display": "standalone",
+  "background_color": "#000010",
+  "theme_color": "#1a003a",
+  "orientation": "portrait-primary",
+  "lang": "pl",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
