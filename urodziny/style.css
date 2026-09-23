@@ -1,0 +1,30 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a003a, #3a0068, #ff5e9c);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}
+
+#app h1 {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  margin-bottom: 12px;
+}
+
+#app p {
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  opacity: 0.85;
+}
