@@ -2,15 +2,155 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Niespodzianka 🎡</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Kotkowe urodziny</title>
+  <meta name="description" content="Kotku, coś na Ciebie czeka. Otwórz, kiedy będziesz gotowa.">
+  <meta property="og:title" content="Kotku, masz wiadomość!">
+  <meta property="og:description" content="Coś na Ciebie czeka. Otwórz, kiedy będziesz gotowa.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#C8EEDB">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M18 44 22 8l26 20h4l26-20 4 36c6 8 8 16 8 24 0 18-18 28-40 28S10 86 10 68c0-8 2-16 8-24z' fill='%23FF8A3D' stroke='%232A1E3F' stroke-width='5' stroke-linejoin='round'/%3E%3Ccircle cx='36' cy='60' r='6' fill='%232A1E3F'/%3E%3Ccircle cx='64' cy='60' r='6' fill='%232A1E3F'/%3E%3Cpath d='M46 72h8l-4 5z' fill='%23FF7EAD'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800;900&family=Nunito:wght@600;700;800&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main id="app">
-    <h1>Coś się szykuje... 🎢</h1>
-    <p>Tu wkrótce pojawi się niespodzianka.</p>
-  </main>
+  <div id="app">
+    <header class="hud">
+      <div class="clues" aria-label="Zebrane tropy">
+        <span class="clues-label">Tropy</span>
+        <span class="clue-slot" data-slot="0"></span>
+        <span class="clue-slot" data-slot="1"></span>
+        <span class="clue-slot" data-slot="2"></span>
+      </div>
+      <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true" aria-label="Wycisz dźwięk"></button>
+    </header>
+
+    <main class="scenes">
+      <!-- 0. Start -->
+      <section class="scene scene-start" id="start" data-bg="mint">
+        <div class="stage stage-start" data-art="start"></div>
+        <div class="copy">
+          <p class="eyebrow">Wiadomość specjalna</p>
+          <h1 class="title" data-fill="start-title">Psst… Kotku!</h1>
+          <p class="lead">Koty z całego osiedla mają dla Ciebie małą przygodę. Włącz dźwięk i daj się poprowadzić.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btn-start" type="button">Zaczynamy</button>
+        </div>
+      </section>
+
+      <!-- 1. Tort -->
+      <section class="scene scene-cake" id="cake" data-bg="peach" hidden>
+        <div class="copy">
+          <p class="eyebrow">Dzisiaj wielki dzień</p>
+          <h1 class="title" data-fill="cake-title">Kończysz 22 lata!</h1>
+        </div>
+        <button class="stage stage-cake" id="cake-btn" type="button" aria-label="Zdmuchnij świeczki" data-art="cake"></button>
+        <p class="hint" id="cake-hint">Pomyśl życzenie i dotknij tortu, żeby zdmuchnąć świeczki.</p>
+        <div class="actions">
+          <button class="btn" id="btn-cake-next" type="button" hidden>Dalej</button>
+        </div>
+      </section>
+
+      <!-- 2. Historyjka -->
+      <section class="scene scene-story" id="story" data-bg="mint" hidden>
+        <p class="chapter">Tymczasem na kocim osiedlu…</p>
+        <div class="stage stage-story">
+          <div class="actor actor-host" data-art="mruczek"></div>
+          <div class="runner" id="story-mouse" data-art="mouse-envelope" hidden></div>
+          <div class="gift-box" data-art="gift"></div>
+        </div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-story-next" type="button" hidden>Ruszamy w pościg</button>
+        </div>
+      </section>
+
+      <!-- 3. Pudełka -->
+      <section class="scene scene-boxes" id="boxes" data-bg="lilac" hidden>
+        <p class="chapter">Rozdział 1 z 3 · Pudełka</p>
+        <div class="stage stage-boxes">
+          <div class="actor actor-small" data-art="pazur"></div>
+        </div>
+        <div class="shell" id="shell">
+          <button class="box" type="button" aria-label="Pudełko 1" disabled></button>
+          <button class="box" type="button" aria-label="Pudełko 2" disabled></button>
+          <button class="box" type="button" aria-label="Pudełko 3" disabled></button>
+        </div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-shuffle" type="button" hidden>Przestawiaj!</button>
+          <button class="btn" id="btn-boxes-next" type="button" hidden>Dalej</button>
+        </div>
+      </section>
+
+      <!-- 4. Memory -->
+      <section class="scene scene-memory" id="memory" data-bg="night" hidden>
+        <p class="chapter">Rozdział 2 z 3 · Nocne zwierzaki</p>
+        <div class="memory-head">
+          <div class="actor actor-mini luna-moon" data-art="luna"></div>
+          <p class="moves" id="moves" aria-live="polite">Ruchy: 0</p>
+        </div>
+        <div class="memory-grid" id="memory-grid"></div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-memory-next" type="button" hidden>Dalej</button>
+        </div>
+      </section>
+
+      <!-- 5. Pościg -->
+      <section class="scene scene-chase" id="chase" data-bg="sun" hidden>
+        <p class="chapter">Rozdział 3 z 3 · Pościg</p>
+        <div class="chase-head">
+          <div class="actor actor-mini" data-art="paczek"></div>
+          <div class="catch-meter" id="catch-meter" aria-live="polite"></div>
+        </div>
+        <div class="garden" id="garden">
+          <button class="garden-mouse" id="garden-mouse" type="button" aria-label="Złap myszkę" data-art="mouse" hidden></button>
+        </div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-chase-start" type="button" hidden>Łap ją!</button>
+          <button class="btn" id="btn-chase-next" type="button" hidden>Dalej</button>
+        </div>
+      </section>
+
+      <!-- 6. Zgadujesz? -->
+      <section class="scene scene-guess" id="guess" data-bg="peach" hidden>
+        <p class="eyebrow">Wszystkie tropy</p>
+        <h1 class="title">Zgadujesz, dokąd to prowadzi?</h1>
+        <ol class="clue-list" id="clue-list"></ol>
+        <div class="stage stage-guess">
+          <div class="actor actor-small" data-art="mouse-envelope"></div>
+        </div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-guess-next" type="button" hidden>Otwórz kopertę</button>
+        </div>
+      </section>
+
+      <!-- 7. Prezent -->
+      <section class="scene scene-reveal" id="reveal" data-bg="sky" hidden>
+        <button class="envelope" id="envelope" type="button" aria-label="Otwórz kopertę" data-art="envelope"></button>
+        <p class="hint" id="envelope-hint">Dotknij koperty, żeby ją otworzyć.</p>
+        <div class="finale" id="finale" hidden>
+          <div class="coaster" data-art="coaster" aria-hidden="true"></div>
+          <h1 class="title">Jedziemy do Energylandii!</h1>
+          <div class="ticket-card" data-fill="ticket"></div>
+          <p class="lead" data-fill="finale-lead"></p>
+          <div class="crew" data-art="crew"></div>
+          <p class="signoff" data-fill="signoff"></p>
+          <div class="actions">
+            <button class="btn btn-quiet" id="btn-replay" type="button">Zobacz jeszcze raz</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <canvas id="confetti" aria-hidden="true"></canvas>
   <script src="script.js"></script>
 </body>
 </html>
