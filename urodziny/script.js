@@ -14,13 +14,13 @@ const CONFIG = {
   podpis: 'Twój kierowca, Lampart i Emi',
 };
 
-// Pieczątki w paszporcie Lamparta. together: true = wspólna przygoda z nią.
+// Pieczątki w paszporcie Lamparta. together: wspólna przygoda z nią, soon: przygoda, która dopiero będzie.
 const STAMPS = [
   { place: 'Warszawa', sub: 'Lotnisko', icon: 'plane', color: '#2F55C4', shape: 'rect' },
   { place: 'Afryka', sub: 'Safari', icon: 'sun', color: '#CF3F37', shape: 'circle' },
   { place: 'Amazonia', sub: 'Skok w dżunglę', icon: 'chute', color: '#23855A', shape: 'oval' },
-  { place: 'Teneryfa', sub: 'Park wodny', icon: 'wave', color: '#1C7FA3', shape: 'circle', together: true },
-  { place: 'Turcja', sub: 'Land of Legends', icon: 'castle', color: '#7447B5', shape: 'rect', together: true },
+  { place: 'Teneryfa', sub: 'Siam Park', icon: 'wave', color: '#1C7FA3', shape: 'circle', together: true },
+  { place: 'Turcja', sub: 'Land of Legends', icon: 'castle', color: '#7447B5', shape: 'rect', together: true, soon: true },
 ];
 const FINAL_STAMP = { place: 'Zator', sub: 'Energylandia', icon: 'coaster', color: '#E0561B', shape: 'circle', together: true };
 
@@ -664,11 +664,12 @@ const STAMP_ICONS = {
 
 function stampHTML(st, i, extra = '') {
   const rot = [-8, 5, -4, 7, -6, 3][i % 6];
-  return `<div class="stamp stamp-${st.shape} ${extra}" style="--c:${st.color};--r:${rot}deg;--i:${i}">
+  return `<div class="stamp stamp-${st.shape}${st.soon ? ' stamp-soon' : ''} ${extra}" style="--c:${st.color};--r:${rot}deg;--i:${i}">
     <svg class="stamp-icon" viewBox="0 0 48 36" fill="currentColor" aria-hidden="true">${STAMP_ICONS[st.icon]()}</svg>
     <span class="stamp-place">${esc(st.place)}</span>
     <span class="stamp-sub">${esc(st.sub)}</span>
     ${st.together ? `<span class="stamp-with">${esc(CONFIG.zKim)}</span>` : ''}
+    ${st.soon ? '<span class="stamp-soon-tag">już za chwilę!</span>' : ''}
   </div>`;
 }
 
@@ -1088,7 +1089,7 @@ SETUP.passport = async (el, s) => {
   await talk(s, b, [
     { who: 'lampart', text: 'To mój paszport. Pierwsza pieczątka: lotnisko w Warszawie, gdzie wsiadłem do mojego pierwszego samolotu.' },
     { who: 'lampart', text: 'Potem była Afryka, a nad Amazonią skoczyłem ze spadochronem i przedzierałem się przez dżunglę.' },
-    { who: 'lampart', text: `Ale te dwie są najważniejsze, bo zbierałem je ${CONFIG.zKim}: park wodny na Teneryfie i Land of Legends w Turcji.` },
+    { who: 'lampart', text: `Ale najważniejsze są te, które zbieram ${CONFIG.zKim}: Siam Park na Teneryfie, a zaraz dojdzie Land of Legends w Turcji. Już się szykuję!` },
     { who: 'lampart', text: 'Została jedna pusta strona. W kopercie Pestki jest coś, co ją wypełni. Łapiemy ją!' },
   ]);
   showBtn(next);
