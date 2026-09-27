@@ -2,16 +2,27 @@
 
 // Ustawienia niespodzianki: tu zmieniasz imię, wiek, trasę, termin i podpis.
 const CONFIG = {
-  imie: 'Kotek',
-  wolacz: 'Kotku',
+  imie: 'Zuzia',
+  wolacz: 'Zuziu',
+  zKim: 'z Zuzią',
   wiek: 22,
   skad: 'Wrocław',
   dokad: 'Zator',
   dystans: 'ok. 270 km',
   termin: '',
-  dedykacja: 'Wszystkiego najlepszego, Kotku. Kocham Cię!',
-  podpis: 'Twój kierowca',
+  dedykacja: 'Wszystkiego najlepszego, Zuziu. Kocham Cię!',
+  podpis: 'Twój kierowca, Lampart i Emi',
 };
+
+// Pieczątki w paszporcie Lamparta. together: true = wspólna przygoda z nią.
+const STAMPS = [
+  { place: 'Warszawa', sub: 'Lotnisko', icon: 'plane', color: '#2F55C4', shape: 'rect' },
+  { place: 'Afryka', sub: 'Safari', icon: 'sun', color: '#CF3F37', shape: 'circle' },
+  { place: 'Amazonia', sub: 'Skok w dżunglę', icon: 'chute', color: '#23855A', shape: 'oval' },
+  { place: 'Teneryfa', sub: 'Park wodny', icon: 'wave', color: '#1C7FA3', shape: 'circle', together: true },
+  { place: 'Turcja', sub: 'Land of Legends', icon: 'castle', color: '#7447B5', shape: 'rect', together: true },
+];
+const FINAL_STAMP = { place: 'Zator', sub: 'Energylandia', icon: 'coaster', color: '#E0561B', shape: 'circle', together: true };
 
 const C = {
   ink: '#2A1E3F',
@@ -156,6 +167,15 @@ const SFX = {
   meow: (s) => s.meow(),
   blow: (s) => s.noise({ d: 0.55, v: 0.4, f: 900, q: 0.6 }),
   swoosh: (s) => s.noise({ d: 0.18, v: 0.14, f: 1800, q: 1.2 }),
+  thud: (s) => {
+    s.tone({ f: 150, to: 50, d: 0.2, v: 0.55 });
+    s.noise({ d: 0.09, v: 0.3, f: 500, q: 0.7 });
+  },
+  coin: (s) => {
+    s.tone({ f: 988, d: 0.08, type: 'square', v: 0.05 });
+    s.tone({ f: 1319, t: 0.07, d: 0.16, type: 'square', v: 0.05 });
+  },
+  bump: (s) => s.tone({ f: 220, to: 110, d: 0.25, type: 'triangle', v: 0.3 }),
   win: (s) => [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach((f, i) => s.tone({ f, t: i * 0.09, d: 0.3, type: 'triangle', v: 0.2 })),
   clue: (s) => [NOTE.G5, NOTE.C6, 1318.5].forEach((f, i) => s.tone({ f, t: i * 0.07, d: 0.4, v: 0.16 })),
   birthday: (s) => {
@@ -188,6 +208,7 @@ function cat(opts = {}) {
     fur: '#FF9A4D', stripe: '#E46F24', belly: '#FFE9D2', inner: C.inner,
     eyes: 'dot', hat: null, prop: null, collar: null,
     patches: [], bodyPatches: [], stripes: true, wide: 1, crop: false,
+    pawFill: null, muzzle: false, scarf: null, attrs: '',
     ...opts,
   };
   const ink = C.ink, w = p.wide;
@@ -207,7 +228,12 @@ function cat(opts = {}) {
     <path d="M64 146 Q100 166 136 146" fill="none" stroke="${p.collar}" stroke-width="6" stroke-linecap="round"/>
     <circle cx="100" cy="161" r="7" fill="${C.butter}" stroke="${ink}" stroke-width="3"/>` : '';
 
-  const pawAt = (x) => `<ellipse cx="${x}" cy="209" rx="14" ry="9" fill="${p.fur}" ${s}/>
+  const scarf = p.scarf ? `
+    <path d="M64 146 Q100 168 136 146" fill="none" stroke="${ink}" stroke-width="14" stroke-linecap="round"/>
+    <path d="M64 146 Q100 168 136 146" fill="none" stroke="${p.scarf}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M116 156 Q126 170 122 186 L110 183 Q113 170 106 159 Z" fill="${p.scarf}" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/>` : '';
+
+  const pawAt = (x) => `<ellipse cx="${x}" cy="209" rx="14" ry="9" fill="${p.pawFill || p.fur}" ${s}/>
     <path d="M${x - 4} 213 v-4 M${x + 4} 213 v-4" stroke="${ink}" stroke-width="2" stroke-linecap="round"/>`;
 
   const body = `<g class="body">
@@ -215,7 +241,7 @@ function cat(opts = {}) {
     ${ellipses(p.bodyPatches)}
     <ellipse cx="100" cy="178" rx="${24 * w}" ry="28" fill="${p.belly}"/>
     ${p.stripes ? `<path d="M${100 - 42 * w} 162 h10 M${100 - 44 * w} 176 h9 M${100 + 42 * w} 162 h-10 M${100 + 44 * w} 176 h-9" stroke="${p.stripe}" stroke-width="5" stroke-linecap="round"/>` : ''}
-    ${collar}
+    ${collar}${scarf}
     ${pawAt(100 - 18 * w)}${pawAt(100 + 18 * w)}
   </g>`;
 
@@ -233,11 +259,16 @@ function cat(opts = {}) {
       <ellipse cx="122" cy="100" rx="11" ry="12" fill="#D6F36B" stroke="${ink}" stroke-width="3"/>
       <ellipse cx="78" cy="100" rx="3.4" ry="9" fill="${ink}"/><ellipse cx="122" cy="100" rx="3.4" ry="9" fill="${ink}"/>
       <circle cx="82" cy="95" r="2.6" fill="#fff"/><circle cx="126" cy="95" r="2.6" fill="#fff"/></g>`,
+    green: `<g class="eyes">
+      <ellipse cx="78" cy="100" rx="10" ry="12" fill="#7FD47E" stroke="${ink}" stroke-width="3"/>
+      <ellipse cx="122" cy="100" rx="10" ry="12" fill="#7FD47E" stroke="${ink}" stroke-width="3"/>
+      <ellipse cx="78" cy="101" rx="4.6" ry="8.5" fill="${ink}"/><ellipse cx="122" cy="101" rx="4.6" ry="8.5" fill="${ink}"/>
+      <circle cx="81.5" cy="95" r="3" fill="#fff"/><circle cx="125.5" cy="95" r="3" fill="#fff"/></g>`,
     sleepy: `<g class="eyes still"><path d="M68 100 Q78 107 88 100 M112 100 Q122 107 132 100" fill="none" stroke="${ink}" stroke-width="4.5" stroke-linecap="round"/></g>`,
     happy: `<g class="eyes still"><path d="M69 104 Q78 93 87 104 M113 104 Q122 93 131 104" fill="none" stroke="${ink}" stroke-width="4.5" stroke-linecap="round"/></g>`,
   };
 
-  const face = `
+  const face = `${p.muzzle ? '<ellipse cx="100" cy="120" rx="19" ry="12" fill="#FFFFFF"/>' : ''}
     <ellipse cx="63" cy="117" rx="9" ry="5.5" fill="${C.bubblegum}" opacity=".5"/>
     <ellipse cx="137" cy="117" rx="9" ry="5.5" fill="${C.bubblegum}" opacity=".5"/>
     <path d="M94 113 Q100 110.5 106 113 L100 119.5 Z" fill="${C.bubblegum}" stroke="${ink}" stroke-width="2.5" stroke-linejoin="round"/>
@@ -245,10 +276,14 @@ function cat(opts = {}) {
     <path d="M58 110 L30 104 M58 117 L29 120 M142 110 L170 104 M142 117 L171 120" stroke="${ink}" stroke-width="2.5" stroke-linecap="round"/>`;
 
   const hats = {
-    party: `<g transform="rotate(-12 100 50)">
-      <path d="M80 56 L102 6 L122 56 Z" fill="${C.bubblegum}" ${s}/>
-      <path d="M89 42 H114 M95 28 H109" stroke="${C.butter}" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="102" cy="6" r="7.5" fill="${C.butter}" stroke="${ink}" stroke-width="3.5"/></g>`,
+    goggles: `<g>
+      <path d="M40 72 Q100 46 160 72" fill="none" stroke="${ink}" stroke-width="9" stroke-linecap="round"/>
+      <path d="M40 72 Q100 46 160 72" fill="none" stroke="#7A5234" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="82" cy="62" r="14" fill="#BFE6FA" stroke="${ink}" stroke-width="4"/>
+      <circle cx="118" cy="62" r="14" fill="#BFE6FA" stroke="${ink}" stroke-width="4"/>
+      <circle cx="82" cy="62" r="9" fill="none" stroke="#D7AE55" stroke-width="3"/>
+      <circle cx="118" cy="62" r="9" fill="none" stroke="#D7AE55" stroke-width="3"/>
+      <path d="M76 57 q3 -4 8 -4 M112 57 q3 -4 8 -4" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></g>`,
     detective: `<g>
       <path d="M50 66 Q52 26 100 24 Q148 26 150 66 Q100 50 50 66 Z" fill="#C08A55" ${s}/>
       <path d="M66 36 L74 58 M100 26 V52 M134 36 L126 58 M56 50 Q100 36 144 50" stroke="#8C5B2E" stroke-width="3" fill="none" stroke-linecap="round"/>
@@ -273,19 +308,27 @@ function cat(opts = {}) {
 
   const viewBox = p.crop ? '22 0 156 156' : '0 0 200 220';
   const blink = (-Math.random() * 5).toFixed(2);
-  return `<svg class="cat" viewBox="${viewBox}" aria-hidden="true" style="--blink:${blink}s">${p.crop ? '' : tail}${body}${head}${p.prop && !p.crop ? props[p.prop] : ''}</svg>`;
+  return `<svg class="cat" viewBox="${viewBox}" ${p.attrs} aria-hidden="true" style="--blink:${blink}s">${p.crop ? '' : tail}${body}${head}${p.prop && !p.crop ? props[p.prop] : ''}</svg>`;
 }
 
+const rosette = (cx, cy) => [
+  { cx, cy, rx: 7, ry: 5.5, fill: '#5A3317' },
+  { cx, cy, rx: 3.4, ry: 2.5, fill: '#D0913F' },
+];
+
 const CATS = {
-  mruczek: (o) => cat({ hat: 'party', ...o }),
-  pazur: (o) => cat({ fur: '#A9A3BE', stripe: '#7C7596', belly: '#ECE9F4', hat: 'detective', prop: 'magnifier', ...o }),
-  luna: (o) => cat({ fur: '#3E3756', belly: '#4C4466', inner: '#C77BA0', stripes: false, eyes: 'glow', collar: C.bubblegum, ...o }),
-  paczek: (o) => cat({
-    fur: '#FFF6EA', belly: '#FFFFFF', stripes: false, eyes: 'sleepy', wide: 1.25,
-    patches: [{ cx: 72, cy: 70, rx: 22, ry: 17, fill: '#FF9A4D' }, { cx: 134, cy: 121, rx: 14, ry: 10, fill: '#5B5068' }],
-    bodyPatches: [{ cx: 136, cy: 168, rx: 15, ry: 20, fill: '#FF9A4D' }, { cx: 66, cy: 186, rx: 11, ry: 9, fill: '#5B5068' }],
+  lampart: (o) => cat({
+    fur: '#A8A5B8', belly: '#FFFFFF', pawFill: '#FFFFFF', stripes: false, eyes: 'green',
+    muzzle: true, hat: 'goggles', scarf: C.tangerine, ...o,
+  }),
+  emi: (o) => cat({
+    fur: '#E7A650', stripe: '#6B3F1D', belly: '#FFF1DC', eyes: 'green',
+    patches: [...rosette(64, 76), ...rosette(136, 76), ...rosette(58, 124), ...rosette(142, 124)],
+    bodyPatches: [...rosette(72, 150), ...rosette(128, 150), ...rosette(64, 188), ...rosette(136, 188)],
     ...o,
   }),
+  pazur: (o) => cat({ fur: '#A9A3BE', stripe: '#7C7596', belly: '#ECE9F4', hat: 'detective', prop: 'magnifier', ...o }),
+  luna: (o) => cat({ fur: '#3E3756', belly: '#4C4466', inner: '#C77BA0', stripes: false, eyes: 'glow', collar: C.bubblegum, ...o }),
 };
 
 const KITTENS = [
@@ -326,7 +369,9 @@ function face(p) {
     case 'kot':
       back = `<path d="M20 48 L22 12 L48 30 Z" fill="${p.fur}" ${s}/><path d="M80 48 L78 12 L52 30 Z" fill="${p.fur}" ${s}/>
         <path d="M26 40 L27 22 L41 32 Z M74 40 L73 22 L59 32 Z" fill="${C.inner}"/>`;
-      mid = `<path d="M50 29 v7 M42 31 l1 6 M58 31 l-1 6" stroke="${p.stripe}" stroke-width="3.5" stroke-linecap="round"/>`;
+      mid = `${p.stripe ? `<path d="M50 29 v7 M42 31 l1 6 M58 31 l-1 6" stroke="${p.stripe}" stroke-width="3.5" stroke-linecap="round"/>` : ''}
+        ${p.spots ? `<g fill="#5A3317"><ellipse cx="30" cy="50" rx="4" ry="3"/><ellipse cx="70" cy="50" rx="4" ry="3"/><ellipse cx="26" cy="72" rx="3.5" ry="2.8"/><ellipse cx="74" cy="72" rx="3.5" ry="2.8"/></g>` : ''}
+        ${p.muzzle ? '<ellipse cx="50" cy="70" rx="12" ry="8" fill="#fff"/>' : ''}`;
       front = `<path d="M31 64 l-11 -2 M31 69 l-11 3 M69 64 l11 -2 M69 69 l11 3" stroke="${ink}" stroke-width="2" stroke-linecap="round"/>`;
       break;
     case 'lis':
@@ -352,6 +397,28 @@ function face(p) {
         <ellipse cx="80" cy="56" rx="10" ry="21" fill="#9C6B3E" ${s} transform="rotate(-18 80 56)"/>
         <path d="M47 76 q3 8 6 0 Z" fill="${C.bubblegum}" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/>`;
       break;
+    case 'lew': {
+      const mane = Array.from({ length: 10 }, (_, i) => {
+        const a = (i / 10) * Math.PI * 2;
+        return `<circle cx="${(50 + 33 * Math.cos(a)).toFixed(1)}" cy="${(58 + 33 * Math.sin(a)).toFixed(1)}" r="12" fill="#C8702A" ${s}/>`;
+      }).join('');
+      back = `${mane}<circle cx="27" cy="33" r="7" fill="${p.fur}" ${s}/><circle cx="73" cy="33" r="7" fill="${p.fur}" ${s}/>`;
+      mid = '<ellipse cx="50" cy="70" rx="12" ry="8" fill="#FFE3B3"/>';
+      break;
+    }
+    case 'malpka':
+      back = `<circle cx="16" cy="58" r="11" fill="${p.fur}" ${s}/><circle cx="84" cy="58" r="11" fill="${p.fur}" ${s}/>
+        <circle cx="16" cy="58" r="5.5" fill="#E9C39B"/><circle cx="84" cy="58" r="5.5" fill="#E9C39B"/>`;
+      mid = '<g fill="#E9C39B"><circle cx="39" cy="55" r="12"/><circle cx="61" cy="55" r="12"/><ellipse cx="50" cy="71" rx="18" ry="13"/></g>';
+      break;
+    case 'zabka':
+      back = `<circle cx="34" cy="32" r="12" fill="${p.fur}" ${s}/><circle cx="66" cy="32" r="12" fill="${p.fur}" ${s}/>`;
+      break;
+    case 'hipcio':
+      back = `<circle cx="28" cy="31" r="7" fill="${p.fur}" ${s}/><circle cx="72" cy="31" r="7" fill="${p.fur}" ${s}/>`;
+      front = `<ellipse cx="50" cy="73" rx="20" ry="13" fill="#CDBDEA" stroke="${ink}" stroke-width="2.5"/>
+        <ellipse cx="43" cy="71" rx="2.5" ry="3.5" fill="${ink}"/><ellipse cx="57" cy="71" rx="2.5" ry="3.5" fill="${ink}"/>`;
+      break;
     case 'panda':
       back = `<circle cx="26" cy="32" r="12" fill="${ink}"/><circle cx="74" cy="32" r="12" fill="${ink}"/>`;
       mid = `<ellipse cx="37" cy="57" rx="9" ry="11" transform="rotate(25 37 57)" fill="${ink}"/>
@@ -360,14 +427,31 @@ function face(p) {
     default:
       break;
   }
-  const eyeFill = p.kind === 'panda' ? '#fff' : ink;
+  const [ex, ey] = p.kind === 'zabka' ? [16, 32] : [11, 57];
+  const L = 50 - ex, Rt = 50 + ex;
+  let eyes;
+  if (p.kind === 'zabka') {
+    eyes = `<circle cx="${L}" cy="${ey}" r="6.5" fill="#fff"/><circle cx="${Rt}" cy="${ey}" r="6.5" fill="#fff"/>
+      <circle cx="${L}" cy="${ey + 1}" r="3.6" fill="${ink}"/><circle cx="${Rt}" cy="${ey + 1}" r="3.6" fill="${ink}"/>`;
+  } else if (p.green) {
+    eyes = `<circle cx="${L}" cy="${ey}" r="5.4" fill="#7FD47E" stroke="${ink}" stroke-width="1.6"/><circle cx="${Rt}" cy="${ey}" r="5.4" fill="#7FD47E" stroke="${ink}" stroke-width="1.6"/>
+      <ellipse cx="${L}" cy="${ey}" rx="1.9" ry="4" fill="${ink}"/><ellipse cx="${Rt}" cy="${ey}" rx="1.9" ry="4" fill="${ink}"/>
+      <circle cx="${L + 1.8}" cy="${ey - 2}" r="1.3" fill="#fff"/><circle cx="${Rt + 1.8}" cy="${ey - 2}" r="1.3" fill="#fff"/>`;
+  } else if (p.kind === 'panda') {
+    eyes = `<circle cx="${L}" cy="${ey}" r="4.4" fill="#fff"/><circle cx="${Rt}" cy="${ey}" r="4.4" fill="#fff"/>
+      <circle cx="${L}" cy="${ey}" r="2.2" fill="${ink}"/><circle cx="${Rt}" cy="${ey}" r="2.2" fill="${ink}"/>`;
+  } else {
+    eyes = `<circle cx="${L}" cy="${ey}" r="4.4" fill="${ink}"/><circle cx="${Rt}" cy="${ey}" r="4.4" fill="${ink}"/>
+      <circle cx="${L + 1.5}" cy="${ey - 1.5}" r="1.5" fill="#fff"/><circle cx="${Rt + 1.5}" cy="${ey - 1.5}" r="1.5" fill="#fff"/>`;
+  }
   const noseFill = p.kind === 'kot' || p.kind === 'krolik' ? C.bubblegum : ink;
-  const features = `
-    <circle cx="39" cy="57" r="4.4" fill="${eyeFill}"/><circle cx="61" cy="57" r="4.4" fill="${eyeFill}"/>
-    ${p.kind === 'panda' ? `<circle cx="39" cy="57" r="2.2" fill="${ink}"/><circle cx="61" cy="57" r="2.2" fill="${ink}"/>` : `<circle cx="40.5" cy="55.5" r="1.5" fill="#fff"/><circle cx="62.5" cy="55.5" r="1.5" fill="#fff"/>`}
-    <ellipse cx="29" cy="68" rx="5" ry="3.2" fill="${C.bubblegum}" opacity=".5"/><ellipse cx="71" cy="68" rx="5" ry="3.2" fill="${C.bubblegum}" opacity=".5"/>
-    <ellipse cx="50" cy="66" rx="4.5" ry="3.2" fill="${noseFill}" stroke="${ink}" stroke-width="1.5"/>
+  let mouth = `<ellipse cx="50" cy="66" rx="4.5" ry="3.2" fill="${noseFill}" stroke="${ink}" stroke-width="1.5"/>
     <path d="M50 69.5 q-1 5.5 -6 5.5 M50 69.5 q1 5.5 6 5.5" fill="none" stroke="${ink}" stroke-width="2.3" stroke-linecap="round"/>`;
+  if (p.kind === 'zabka') mouth = `<path d="M32 68 Q50 82 68 68" fill="none" stroke="${ink}" stroke-width="2.5" stroke-linecap="round"/>`;
+  if (p.kind === 'hipcio') mouth = '';
+  const features = `${eyes}
+    <ellipse cx="29" cy="68" rx="5" ry="3.2" fill="${C.bubblegum}" opacity=".5"/><ellipse cx="71" cy="68" rx="5" ry="3.2" fill="${C.bubblegum}" opacity=".5"/>
+    ${mouth}`;
   return `<svg class="face" viewBox="0 0 100 100" aria-hidden="true">${back}<circle cx="50" cy="58" r="32" fill="${p.fur}"/>${mid}<circle cx="50" cy="58" r="32" fill="none" ${s}/>${features}${front}</svg>`;
 }
 
@@ -561,6 +645,88 @@ const ICONS = {
     <path d="M8 56 H42" stroke="${C.ink}" stroke-width="4" stroke-linecap="round"/></svg>`,
 };
 
+ICONS.passport = () => `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <rect x="14" y="8" width="36" height="48" rx="5" fill="#2B3A67" stroke="${C.ink}" stroke-width="4"/>
+    <circle cx="32" cy="28" r="9" fill="none" stroke="#F2CF75" stroke-width="3"/>
+    <path d="M23 28 H41 M32 19 Q27 28 32 37 Q37 28 32 19" fill="none" stroke="#F2CF75" stroke-width="2"/>
+    <path d="M24 45 H40" stroke="#F2CF75" stroke-width="3" stroke-linecap="round"/>
+    <path d="M8 56 L56 8" stroke="${C.bubblegum}" stroke-width="6" stroke-linecap="round"/>
+    <path d="M8 56 L56 8" stroke="${C.ink}" stroke-width="2" stroke-linecap="round" opacity=".4"/></svg>`;
+
+const STAMP_ICONS = {
+  plane: () => '<path d="M4 18 L30 12 L40 4 Q44 2 43 6 L36 14 L40 30 L36 31 L28 18 L16 21 L14 27 L11 28 L10 20 L4 20 Z"/>',
+  sun: () => '<circle cx="24" cy="18" r="8"/><path d="M24 2 V6 M24 30 V34 M8 18 H12 M36 18 H40 M13 7 L16 10 M32 26 L35 29 M35 7 L32 10 M16 26 L13 29" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  chute: () => '<path d="M6 16 Q6 2 24 2 Q42 2 42 16 Z"/><path d="M6 16 L22 30 M42 16 L26 30 M24 16 V29" stroke="currentColor" stroke-width="2"/><rect x="20" y="28" width="8" height="7" rx="2"/>',
+  wave: () => '<path d="M2 18 Q8 10 14 18 T26 18 T38 18 T50 18" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M2 28 Q8 20 14 28 T26 28 T38 28 T50 28" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
+  castle: () => '<path d="M6 34 V12 H11 V17 H16 V12 H21 V4 L24 1 L27 4 V12 H32 V17 H37 V12 H42 V34 Z"/><rect x="20" y="24" width="8" height="10" rx="4" fill="#F4EEDF"/>',
+  coaster: () => '<path d="M2 32 C10 32 12 4 20 4 C28 4 28 32 34 32 A7 7 0 1 0 34 18 A7 7 0 1 0 34 32 L48 32" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>',
+};
+
+function stampHTML(st, i, extra = '') {
+  const rot = [-8, 5, -4, 7, -6, 3][i % 6];
+  return `<div class="stamp stamp-${st.shape} ${extra}" style="--c:${st.color};--r:${rot}deg;--i:${i}">
+    <svg class="stamp-icon" viewBox="0 0 48 36" fill="currentColor" aria-hidden="true">${STAMP_ICONS[st.icon]()}</svg>
+    <span class="stamp-place">${esc(st.place)}</span>
+    <span class="stamp-sub">${esc(st.sub)}</span>
+    ${st.together ? `<span class="stamp-with">${esc(CONFIG.zKim)}</span>` : ''}
+  </div>`;
+}
+
+function passportHTML(final) {
+  const stamps = STAMPS.map((st, i) => stampHTML(st, i)).join('');
+  const last = final
+    ? stampHTML(FINAL_STAMP, STAMPS.length, 'slam')
+    : '<div class="stamp-empty" aria-label="Pusta strona"><span>?</span></div>';
+  return `<div class="passport">
+    <div class="passport-head"><span>Paszport</span><span>Kot podróżnik</span></div>
+    <div class="passport-id">
+      <div class="passport-photo">${CATS.lampart({ crop: true })}</div>
+      <dl class="passport-data">
+        <div><dt>Imię</dt><dd>Lampart</dd></div>
+        <div><dt>Umaszczenie</dt><dd>szare, białe łapki</dd></div>
+        <div><dt>Oczy</dt><dd>zielone</dd></div>
+      </dl>
+    </div>
+    <div class="passport-stamps">${stamps}${last}</div>
+  </div>`;
+}
+
+function parachuteArt() {
+  const ink = C.ink;
+  const canopy = 'M8 52 Q8 6 60 6 Q112 6 112 52 Q99 44 86 52 Q73 44 60 52 Q47 44 34 52 Q21 44 8 52 Z';
+  return `<svg viewBox="0 0 120 172" aria-hidden="true">
+    <path d="M10 52 L54 104 M34 51 L56 102 M60 51 V100 M86 51 L64 102 M110 52 L66 104" stroke="${ink}" stroke-width="2" stroke-linecap="round"/>
+    <path d="${canopy}" fill="${C.tangerine}"/>
+    <path d="M34 51 Q34 16 60 6 Q45 22 47 48 Z M86 51 Q86 16 60 6 Q75 22 73 48 Z" fill="${C.paper}"/>
+    <path d="${canopy}" fill="none" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>
+    ${CATS.lampart({ attrs: 'x="24" y="92" width="72" height="80"' })}
+  </svg>`;
+}
+
+const fishArt = () => `<svg viewBox="0 0 56 34" aria-hidden="true">
+  <path d="M40 17 L54 5 L51 17 L54 29 Z" fill="${C.butter}" stroke="${C.ink}" stroke-width="3" stroke-linejoin="round"/>
+  <ellipse cx="24" cy="17" rx="19" ry="12" fill="${C.tangerine}" stroke="${C.ink}" stroke-width="3"/>
+  <path d="M26 9 q5 8 0 16 M33 10 q4 7 0 14" fill="none" stroke="${C.ink}" stroke-width="1.8" opacity=".45"/>
+  <circle cx="13" cy="14" r="3.2" fill="${C.ink}"/><circle cx="14" cy="13" r="1.1" fill="#fff"/></svg>`;
+
+const toucanArt = () => `<svg viewBox="0 0 70 50" aria-hidden="true">
+  <path d="M12 30 L2 42 L16 37 Z" fill="${C.ink}"/>
+  <ellipse cx="26" cy="28" rx="16" ry="13" fill="#2F2947" stroke="${C.ink}" stroke-width="3"/>
+  <ellipse cx="33" cy="31" rx="8" ry="9" fill="${C.paper}"/>
+  <path class="wing" d="M14 24 Q24 10 32 25 Q22 30 14 24 Z" fill="#4A4266" stroke="${C.ink}" stroke-width="2"/>
+  <path d="M38 20 Q64 15 66 28 Q52 32 38 29 Z" fill="${C.tangerine}" stroke="${C.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M41 21 Q58 17 63 22" fill="none" stroke="${C.butter}" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="35" cy="22" r="4" fill="${C.paper}" stroke="${C.ink}" stroke-width="1.5"/><circle cx="36" cy="22" r="1.9" fill="${C.ink}"/></svg>`;
+
+const cloudArt = () => `<svg viewBox="-34 -26 70 40" aria-hidden="true"><path d="M-28 10 Q-31 -4 -16 -4 Q-12 -18 4 -16 Q16 -24 25 -8 Q35 -6 32 10 Z" fill="#fff" stroke="${C.ink}" stroke-width="2.5" stroke-linejoin="round" opacity=".9"/></svg>`;
+
+function jungleArt() {
+  const tops = [[10, 40, 26], [44, 30, 28], [80, 42, 24], [112, 28, 30], [150, 40, 26], [186, 30, 28], [222, 44, 24], [256, 28, 30], [294, 40, 26], [330, 32, 28], [360, 42, 22]];
+  const trees = tops.map(([x, y, r], i) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${i % 2 ? '#3E9E6E' : '#5FBF8C'}" stroke="${C.ink}" stroke-width="3"/>`).join('');
+  return `<svg viewBox="0 0 360 110" preserveAspectRatio="none" aria-hidden="true">${trees}<rect x="-5" y="52" width="370" height="60" fill="#3E9E6E"/>
+    <path d="M150 70 h60" stroke="${C.butter}" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 12"/></svg>`;
+}
+
 const SOUND_ICON = {
   on: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   off: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 9.5l5 5M21 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -571,27 +737,28 @@ const SOUND_ICON = {
    ========================================================= */
 
 const ANIMALS = {
-  kot: { name: 'Kot z piwnicy', line: '„Widziałem ją! Pobiegła szybko jak strzała.”', art: () => face({ kind: 'kot', fur: '#C9C4D6', stripe: '#9C95B3' }) },
-  pies: { name: 'Piesek Burek', line: '„Hau! Pachniała serem i benzyną.”', art: () => face({ kind: 'pies', fur: '#E3B27C' }) },
-  krolik: { name: 'Króliczek', line: '„Mówiła coś o wielkiej przygodzie.”', art: () => face({ kind: 'krolik', fur: '#FFFFFF' }) },
-  mis: { name: 'Miś', line: '„Niosła kopertę większą od siebie.”', art: () => face({ kind: 'mis', fur: '#B98253' }) },
-  lis: { name: 'Lisek', line: '„Planuje coś bardzo, bardzo wysoko.”', art: () => face({ kind: 'lis', fur: C.tangerine }) },
-  panda: { name: 'Panda', line: '„Ja spałam. Ale trzymam kciuki!”', art: () => face({ kind: 'panda', fur: '#FFFFFF' }) },
+  lampart: { name: 'Lampart', line: 'Moja najlepsza podróż? Każda, w którą jadę z Tobą.', art: () => face({ kind: 'kot', fur: '#A8A5B8', green: true, muzzle: true }) },
+  emi: { name: 'Emi', line: 'Mrau! To ja nauczyłam Pestkę tak szybko uciekać. Przepraszam!', art: () => face({ kind: 'kot', fur: '#E7A650', stripe: '#6B3F1D', green: true, spots: true }) },
+  lew: { name: 'Lew z Afryki', line: '„Pestka mówiła, że tym razem nie leci do Afryki.”', art: () => face({ kind: 'lew', fur: '#F2B14C' }) },
+  malpka: { name: 'Małpka z Amazonii', line: '„U-u-a! Do dżungli też nie. Podobno za daleko!”', art: () => face({ kind: 'malpka', fur: '#9C6B3E' }) },
+  zabka: { name: 'Żabka z Amazonii', line: '„Kum! Słyszałam, że paszport może zostać w domu.”', art: () => face({ kind: 'zabka', fur: '#7ED36A' }) },
+  hipcio: { name: 'Hipcio', line: '„Parku wodnego nie będzie. Będzie coś szybszego!”', art: () => face({ kind: 'hipcio', fur: '#B8A6D9' }) },
 };
 
 const CAST = {
-  mruczek: { name: 'Mruczek', voice: 'meow', art: () => CATS.mruczek({ crop: true }) },
+  ...Object.fromEntries(Object.entries(ANIMALS).map(([k, a]) => [k, { name: a.name, voice: null, art: a.art }])),
+  lampart: { name: 'Lampart', voice: 'meow', art: () => CATS.lampart({ crop: true }) },
+  emi: { name: 'Emi', voice: 'meow', art: () => CATS.emi({ crop: true }) },
   pazur: { name: 'Detektyw Pazur', voice: 'meow', art: () => CATS.pazur({ crop: true }) },
   luna: { name: 'Luna', voice: 'meow', art: () => CATS.luna({ crop: true }) },
-  paczek: { name: 'Pączek', voice: 'meow', art: () => CATS.paczek({ crop: true }) },
   pestka: { name: 'Myszka Pestka', voice: 'squeak', art: () => mouse({ crop: true }) },
   kociak: { name: 'Kociak z pudełka', voice: 'meow', art: () => KITTENS[0]() },
-  ...Object.fromEntries(Object.entries(ANIMALS).map(([k, a]) => [k, { name: a.name, voice: null, art: a.art }])),
 };
 
 const CLUES = [
   { icon: 'speed', value: '142 km/h', note: 'Karteczka zgubiona w pudełku' },
-  { icon: 'height', value: '77 metrów w górę', note: 'Zeznania nocnych zwierzaków' },
+  { icon: 'height', value: '77 metrów w górę', note: 'Wysokościomierz Pestki' },
+  { icon: 'passport', value: 'Tym razem bez paszportu', note: 'Plotki zwierzaków z podróży' },
   { icon: 'fuel', value: `Pełny bak, ${CONFIG.dystans}`, note: 'Kluczyki i paragon ze stacji' },
 ];
 
@@ -686,8 +853,8 @@ const Confetti = {
    Silnik scen
    ========================================================= */
 
-const SCENES = ['start', 'cake', 'story', 'boxes', 'memory', 'chase', 'guess', 'reveal'];
-const CLUE_FROM = ['boxes', 'memory', 'chase'];
+const SCENES = ['start', 'cake', 'story', 'passport', 'boxes', 'jump', 'memory', 'chase', 'guess', 'reveal'];
+const CLUE_FROM = ['boxes', 'jump', 'memory', 'chase'];
 let scope = null;
 
 function newScope() {
@@ -756,7 +923,7 @@ function showClue(i) {
     m.innerHTML = `<div class="clue-card" role="dialog" aria-modal="true" aria-labelledby="clue-kicker">
       <span class="tape" aria-hidden="true"></span>
       <div class="clue-icon">${ICONS[c.icon]()}</div>
-      <p class="clue-kicker" id="clue-kicker">Trop nr ${i + 1} z 3</p>
+      <p class="clue-kicker" id="clue-kicker">Trop nr ${i + 1} z ${CLUES.length}</p>
       <p class="clue-value">${esc(c.value)}</p>
       <p class="clue-note">${esc(c.note)}</p>
       <button class="btn" type="button">Zapisuję</button>
@@ -883,8 +1050,8 @@ SETUP.story = async (el, s) => {
 
   const b = bubble(el);
   await talk(s, b, [
-    { who: 'mruczek', text: `Wszystkiego najlepszego, ${CONFIG.wolacz}! Jestem Mruczek.` },
-    { who: 'mruczek', text: 'Razem z kotami z osiedla przygotowaliśmy dla Ciebie prezent. Schowaliśmy go w kopercie, w najbezpieczniejszym miejscu na świecie: w pudełku.' },
+    { who: 'lampart', text: `Wszystkiego najlepszego, ${CONFIG.wolacz}! To ja, Lampart. Wróciłem z podróży specjalnie na Twoje urodziny.` },
+    { who: 'lampart', text: 'Razem z Emi przygotowaliśmy dla Ciebie prezent. Schowałem go w kopercie, w najbezpieczniejszym miejscu na świecie: w pudełku.' },
   ]);
 
   runner.hidden = false;
@@ -904,9 +1071,25 @@ SETUP.story = async (el, s) => {
   await s.wait(800);
 
   await talk(s, b, [
-    { who: 'mruczek', text: 'O nie! Myszka Pestka zwinęła kopertę z Twoim prezentem!' },
-    { who: 'mruczek', text: 'Żeby zobaczyć prezent, musisz ją złapać. Po drodze zbieraj tropy, które gubi.' },
-    { who: 'mruczek', text: 'Koty z osiedla znają każdy jej trik i Ci pomogą. Pierwszy czeka detektyw Pazur.' },
+    { who: 'lampart', text: 'O nie! Myszka Pestka zwinęła kopertę z Twoim prezentem!' },
+    { who: 'lampart', text: 'Żeby zobaczyć prezent, musisz ją złapać. Po drodze zbieraj tropy, które gubi. Pomogą nam Emi i koty z osiedla.' },
+    { who: 'lampart', text: 'Ale zanim ruszymy, pokażę Ci coś ważnego.' },
+  ]);
+  showBtn(next);
+};
+
+SETUP.passport = async (el, s) => {
+  const next = $('#btn-passport-next');
+  next.hidden = true;
+  $('.passport-wrap', el).innerHTML = passportHTML(false);
+  STAMPS.forEach((_, i) => s.after(350 + i * 450, () => Sound.play('thud')));
+
+  const b = bubble(el);
+  await talk(s, b, [
+    { who: 'lampart', text: 'To mój paszport. Pierwsza pieczątka: lotnisko w Warszawie, gdzie wsiadłem do mojego pierwszego samolotu.' },
+    { who: 'lampart', text: 'Potem była Afryka, a nad Amazonią skoczyłem ze spadochronem i przedzierałem się przez dżunglę.' },
+    { who: 'lampart', text: `Ale te dwie są najważniejsze, bo zbierałem je ${CONFIG.zKim}: park wodny na Teneryfie i Land of Legends w Turcji.` },
+    { who: 'lampart', text: 'Została jedna pusta strona. W kopercie Pestki jest coś, co ją wypełni. Łapiemy ją!' },
   ]);
   showBtn(next);
 };
@@ -997,7 +1180,162 @@ SETUP.boxes = async (el, s) => {
   await showClue(0);
   await talk(s, b, [
     { who: 'pazur', text: '142 km/h? Tak szybko nie biega nawet Pestka. Ktoś tu się będzie bardzo szybko przemieszczać…' },
-    { who: 'pazur', text: 'Luna wie więcej. Ona widzi wszystko, nawet w nocy.' },
+    { who: 'pazur', text: 'Patrzcie, wskakuje do samolotu! Lampart, to Twój teren.' },
+  ]);
+  showBtn(next);
+};
+
+SETUP.jump = async (el, s) => {
+  const sky = $('#sky'), countEl = $('#fish-count'), altEl = $('#altitude');
+  const btnStart = $('#btn-jump-start'), next = $('#btn-jump-next');
+  const NEED = 10;
+  btnStart.hidden = true;
+  next.hidden = true;
+  sky.className = 'sky';
+  sky.innerHTML = `<div class="sky-clouds"></div><div class="jungle">${jungleArt()}</div><div class="jumper">${parachuteArt()}</div>`;
+  const jumper = $('.jumper', sky), cloudsLayer = $('.sky-clouds', sky);
+  let fish = 0;
+  const render = () => {
+    countEl.textContent = `Rybki: ${fish}/${NEED}`;
+    altEl.textContent = `${Math.max(0, 3000 - fish * 300)} m`;
+  };
+  render();
+
+  const W = () => sky.clientWidth, H = () => sky.clientHeight;
+  const PW = jumper.offsetWidth, PH = jumper.offsetHeight;
+  let x = W() / 2, tx = x;
+  const y0 = 6;
+  const place = (tilt = 0) => { jumper.style.transform = `translate(${(x - PW / 2).toFixed(1)}px, ${y0}px) rotate(${tilt.toFixed(1)}deg)`; };
+  place();
+
+  const b = bubble(el);
+  await talk(s, b, [
+    { who: 'lampart', text: 'Pestka odleciała nad Amazonię. Znam te okolice: kiedyś skoczyłem tu ze spadochronem prosto w dżunglę.' },
+    { who: 'lampart', text: `Skaczemy za nią! Przesuwaj palcem w lewo i w prawo, łap rybki i omijaj tukany. Potrzebujemy ${NEED} rybek na drogę.` },
+  ]);
+  showBtn(btnStart);
+  await clickOnce(s, btnStart);
+  btnStart.hidden = true;
+  sky.classList.add('playing');
+  say(s, b, { who: 'lampart', text: 'Trzymaj się! Wiatr we wąsach!' });
+
+  const setTarget = (clientX) => {
+    const r = sky.getBoundingClientRect();
+    tx = Math.max(PW * 0.4, Math.min(W() - PW * 0.4, clientX - r.left));
+  };
+  s.on(sky, 'pointerdown', (e) => setTarget(e.clientX));
+  s.on(sky, 'pointermove', (e) => setTarget(e.clientX));
+  s.on(document, 'keydown', (e) => {
+    if (e.key === 'ArrowLeft') tx = Math.max(PW * 0.4, tx - 50);
+    if (e.key === 'ArrowRight') tx = Math.min(W() - PW * 0.4, tx + 50);
+  });
+
+  const items = [];
+  const ouch = ['Au! Tukan!', 'Ej, to mój spadochron!', 'Tukany nie mają pierwszeństwa!'];
+  let spawnIn = 0.3, cloudIn = 0, stunned = 0, elapsed = 0, ended = false, last = performance.now(), ouchIdx = 0;
+  let landed;
+  const finished = new Promise((resolve) => { landed = resolve; });
+
+  const spawn = () => {
+    const isFish = Math.random() < 0.66;
+    const size = isFish ? 46 : 58;
+    const node = document.createElement('div');
+    node.className = `drop ${isFish ? 'fish' : 'bird'}`;
+    node.style.width = `${size}px`;
+    node.innerHTML = isFish ? fishArt() : toucanArt();
+    sky.append(node);
+    const vx = isFish ? 0 : rand(-45, 45);
+    if (vx < 0) node.classList.add('flip');
+    items.push({ node, isFish, size, vx, x: rand(size / 2 + 4, W() - size / 2 - 4), y: H() + 30, speed: rand(125, 155) + elapsed * 2.2, r: size * (isFish ? 0.38 : 0.28), hit: false });
+  };
+
+  const cloud = () => {
+    const c = document.createElement('div');
+    c.className = 'sky-cloud';
+    c.style.left = `${rand(-8, 78)}%`;
+    c.style.width = `${Math.round(rand(60, 110))}px`;
+    c.innerHTML = cloudArt();
+    cloudsLayer.append(c);
+    const anim = c.animate([{ transform: `translateY(${H() + 40}px)` }, { transform: 'translateY(-90px)' }], { duration: rand(2600, 4200), easing: 'linear' });
+    anim.onfinish = () => c.remove();
+  };
+
+  const frame = (now) => {
+    if (!s.alive || ended) return;
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    elapsed += dt;
+    spawnIn -= dt;
+    cloudIn -= dt;
+    if (spawnIn <= 0) { spawn(); spawnIn = rand(0.5, 0.8); }
+    if (cloudIn <= 0) { cloud(); cloudIn = rand(0.7, 1.2); }
+
+    const prevX = x;
+    if (stunned > 0) stunned -= dt;
+    else x += (tx - x) * Math.min(1, dt * 9);
+    const vx = (x - prevX) / Math.max(dt, 0.001);
+    const wobble = stunned > 0 ? Math.sin(now / 45) * 14 : 0;
+    place(Math.max(-16, Math.min(16, -vx * 0.04)) + wobble);
+
+    const cx = x, cy = y0 + PH * 0.78;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      it.y -= it.speed * dt;
+      it.x += it.vx * dt;
+      if (it.x < it.size / 2 || it.x > W() - it.size / 2) {
+        it.vx *= -1;
+        it.node.classList.toggle('flip', it.vx < 0);
+      }
+      it.node.style.transform = `translate(${(it.x - it.size / 2).toFixed(1)}px, ${(it.y - it.size / 2).toFixed(1)}px)`;
+      if (!it.hit && Math.hypot(it.x - cx, it.y - cy) < it.r + PW * 0.24) {
+        it.hit = true;
+        if (it.isFish) {
+          fish += 1;
+          render();
+          Sound.play('coin');
+          it.node.classList.add('got');
+          items.splice(i, 1);
+          setTimeout(() => it.node.remove(), 320);
+          if (fish >= NEED) {
+            ended = true;
+            landed();
+            return;
+          }
+          continue;
+        }
+        if (stunned <= 0) {
+          stunned = 0.8;
+          Sound.play('bump');
+          if (navigator.vibrate) navigator.vibrate(60);
+          say(s, b, { who: 'lampart', text: ouch[ouchIdx++ % ouch.length] });
+        }
+      }
+      if (it.y < -it.size) {
+        it.node.remove();
+        items.splice(i, 1);
+      }
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  await finished;
+
+  items.forEach((it) => it.node.classList.add('gone'));
+  sky.classList.remove('playing');
+  sky.classList.add('landed');
+  jumper.style.transition = 'transform 1.8s cubic-bezier(.3, .6, .3, 1)';
+  jumper.style.transform = `translate(${(W() - PW) / 2}px, ${H() - PH - 18}px) rotate(0deg)`;
+  await s.wait(1800);
+  Sound.play('win');
+  const r = sky.getBoundingClientRect();
+  Confetti.burst({ x: r.left + r.width / 2, y: r.top + r.height * 0.7, n: 90 });
+  await talk(s, b, [
+    { who: 'lampart', text: 'Wylądowaliśmy! Idealnie w dżungli, zupełnie jak za dawnych czasów.' },
+    { who: 'pestka', text: 'Pi! 3000 metrów to dla mnie za wysoko! Mnie wystarczy 77… Pa!' },
+  ]);
+  await showClue(1);
+  await talk(s, b, [
+    { who: 'lampart', text: '77 metrów w górę, a potem w dół? To brzmi jak coś szybszego niż spadochron. Luna zna wszystkie nocne plotki, chodźmy do niej.' },
   ]);
   showBtn(next);
 };
@@ -1051,18 +1389,18 @@ SETUP.memory = async (el, s) => {
     }
   });
 
-  await talk(s, b, [{ who: 'luna', text: 'Jestem Luna. W nocy widzę wszystko, a nocne zwierzaki widziały, dokąd biegła Pestka.' }]);
+  await talk(s, b, [{ who: 'luna', text: 'Jestem Luna. Nocą zbierają się tu zwierzaki, które Lampart poznał w podróżach. Wszystkie widziały Pestkę.' }]);
   locked = false;
-  say(s, b, { who: 'luna', text: 'Odkrywaj karty i dobieraj zwierzaki w pary. Każda para coś Ci powie.' });
+  say(s, b, { who: 'luna', text: 'Odkrywaj karty i dobieraj pary. Każda para coś Ci powie.' });
   await done;
 
   await s.wait(900);
   Sound.play('win');
   const r = grid.getBoundingClientRect();
   Confetti.burst({ x: r.left + r.width / 2, y: r.top + r.height / 2, n: 80, spread: Math.PI * 1.4 });
-  await talk(s, b, [{ who: 'luna', text: `Brawo, ${moves} ruchów! Zeznania się zgadzają: Pestka chce wjechać 77 metrów w górę. A potem zjechać w dół. Z własnej woli!` }]);
-  await showClue(1);
-  await talk(s, b, [{ who: 'luna', text: 'Kto wjeżdża tak wysoko tylko po to, żeby spaść? Pączek widział ją ostatnio w ogrodzie.' }]);
+  await talk(s, b, [{ who: 'luna', text: `Brawo, ${moves} ruchów! Wszyscy mówią to samo: tym razem Pestka nie leci za granicę. Paszport zostaje w domu.` }]);
+  await showClue(2);
+  await talk(s, b, [{ who: 'luna', text: 'Czyli przygoda gdzieś w Polsce… Pestka wróciła do ogrodu. Tam czeka Emi, najlepsza łowczyni w okolicy.' }]);
   showBtn(next);
 };
 
@@ -1093,8 +1431,8 @@ SETUP.chase = async (el, s) => {
 
   const b = bubble(el);
   await talk(s, b, [
-    { who: 'paczek', text: 'Mrrr… Jestem Pączek. Za leniwy, żeby biegać, ale z parapetu widzę cały ogród.' },
-    { who: 'paczek', text: `Pestka tu jest. Złap ją ${NEED} razy, to się podda.` },
+    { who: 'emi', text: 'Mrau! Jestem Emi, bengalska łowczyni. Myszy to moja specjalność, ale dziś polujesz Ty.' },
+    { who: 'emi', text: `Pestka biega po ogrodzie. Złap ją ${NEED} razy, to się podda. Ja kibicuję!` },
   ]);
   showBtn(btnStart);
   await clickOnce(s, btnStart);
@@ -1184,7 +1522,7 @@ SETUP.chase = async (el, s) => {
 
   mouseBtn.hidden = false;
   move(true);
-  say(s, b, { who: 'paczek', text: 'Dotknij myszki, zanim ucieknie!' });
+  say(s, b, { who: 'emi', text: 'Dotknij myszki, zanim ucieknie!' });
   schedule();
   await over;
 
@@ -1201,8 +1539,8 @@ SETUP.chase = async (el, s) => {
     { who: 'pestka', text: 'Dobra, dobra, wygrałaś! Poddaję się!' },
     { who: 'pestka', text: 'Ojej… zgubiłam kluczyki do auta. I paragon ze stacji.' },
   ]);
-  await showClue(2);
-  await talk(s, b, [{ who: 'paczek', text: 'Pełny bak i tyle kilometrów… Ktoś tu planuje wycieczkę. Mrrr.' }]);
+  await showClue(3);
+  await talk(s, b, [{ who: 'emi', text: 'Pełny bak i tyle kilometrów… Mrau, czuję wycieczkę autem!' }]);
   showBtn(next);
 };
 
@@ -1215,8 +1553,8 @@ SETUP.guess = async (el, s) => {
   const b = bubble(el);
   await talk(s, b, [
     { who: 'pestka', text: 'Masz, oddaję kopertę. I tak była dla Ciebie. Koty kazały mi tylko trochę pobiegać.' },
-    { who: 'mruczek', text: 'Szybko, wysoko i daleko autem. Masz już pomysł?' },
-    { who: 'mruczek', text: 'Powiedz głośno, co myślisz. A potem otwórz kopertę.' },
+    { who: 'lampart', text: 'Szybko, wysoko, bez paszportu i autem. Masz już pomysł?' },
+    { who: 'lampart', text: 'Powiedz głośno, co myślisz. A potem otwórz kopertę.' },
   ]);
   showBtn(next);
 };
@@ -1230,8 +1568,65 @@ SETUP.reveal = (el, s) => {
   hint.hidden = false;
   fin.hidden = true;
   $('.coaster', el).innerHTML = coasterArt();
-  $('.crew', el).innerHTML = [CATS.mruczek(), CATS.pazur(), CATS.luna(), CATS.paczek(), mouse()]
+  $('.crew', el).innerHTML = [CATS.lampart(), CATS.emi(), CATS.pazur(), CATS.luna(), mouse()]
     .map((svg, i) => `<div style="--i:${i}">${svg}</div>`).join('');
+
+  const invite = $('#invite'), afterYes = $('#after-yes'), yes = $('#btn-yes'), no = $('#btn-no');
+  invite.hidden = false;
+  afterYes.hidden = true;
+  $('#passport-final').innerHTML = '';
+  no.className = 'btn btn-quiet btn-no';
+  no.textContent = 'Nie';
+  no.style.transform = '';
+  const noTexts = ['Na pewno?', 'Pomyśl jeszcze', 'Nie da się', 'Jadę!'];
+  let dodges = 0, lastDodge = 0;
+
+  const accept = async () => {
+    invite.hidden = true;
+    afterYes.hidden = false;
+    $('#passport-final').innerHTML = passportHTML(true);
+    requestAnimationFrame(() => $('#passport-final').scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }));
+    await s.wait(1100);
+    Sound.play('thud');
+    Sound.play('fanfare');
+    if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+    const st = $('#passport-final .slam');
+    const r = st ? st.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+    Confetti.burst({ x: r.left + r.width / 2, y: r.top + r.height / 2, n: 120, spread: Math.PI * 2, power: 0.9 });
+    for (let k = 0; k < 4; k++) {
+      await s.wait(550);
+      Confetti.burst({ x: window.innerWidth * rand(0.15, 0.85), y: window.innerHeight * rand(0.2, 0.5), n: 70, spread: Math.PI * 2, power: 0.8 });
+      Sound.play('pop');
+    }
+  };
+
+  const dodge = () => {
+    if (dodges >= noTexts.length - 1) return;
+    const box = $('#invite-btns').getBoundingClientRect();
+    const rb = no.getBoundingClientRect();
+    const dx = rand(-box.width / 2 + rb.width / 2, box.width / 2 - rb.width / 2);
+    const dy = rand(-30, 40);
+    no.style.transform = `translate(${dx.toFixed(0)}px, ${dy.toFixed(0)}px) rotate(${rand(-12, 12).toFixed(0)}deg)`;
+    no.textContent = noTexts[dodges];
+    dodges += 1;
+    lastDodge = performance.now();
+    Sound.play('squeak');
+    if (dodges === noTexts.length - 1) {
+      no.classList.remove('btn-quiet');
+      no.style.transform = '';
+    }
+  };
+
+  s.on(yes, 'click', accept, { once: true });
+  s.on(no, 'pointerdown', (e) => {
+    if (dodges < noTexts.length - 1) { e.preventDefault(); dodge(); }
+  });
+  s.on(no, 'pointerenter', (e) => { if (e.pointerType === 'mouse') dodge(); });
+  s.on(no, 'click', () => {
+    if (performance.now() - lastDodge < 500) return;
+    if (dodges >= noTexts.length - 1) accept();
+    else dodge();
+  });
 
   s.on(env, 'click', async () => {
     env.disabled = true;
@@ -1307,7 +1702,8 @@ function fillStatic() {
   const fills = {
     'start-title': `Psst… ${esc(CONFIG.wolacz)}!`,
     'cake-title': `Kończysz <span class="age">${esc(CONFIG.wiek)}</span> ${lata(CONFIG.wiek)}!`,
-    'finale-lead': `142 km/h i 77 metrów w górę to Hyperion, najwyższa kolejka w Energylandii. Bilet kupiony, bak zatankowany. Ty weź tylko dobry humor i gumkę do włosów.`,
+    'finale-lead': '142 km/h i 77 metrów w górę to Hyperion, najwyższa kolejka w Energylandii. Tym razem bez paszportu: jedziemy autem, bilet kupiony, bak zatankowany. Ty weź tylko dobry humor i gumkę do włosów.',
+    'invite-q': `Jedziesz ze mną, ${esc(CONFIG.wolacz)}?`,
     signoff: `${esc(CONFIG.dedykacja)}<small>${esc(CONFIG.podpis)}</small>`,
     ticket: ticketHTML(),
   };
@@ -1316,11 +1712,11 @@ function fillStatic() {
     if (html !== undefined) el.innerHTML = html;
   });
 
-  $('[data-art="start"]').innerHTML = `<div class="actor">${CATS.mruczek()}</div><div class="balloons-wrap">${balloons()}</div>`;
-  $$('[data-art="mruczek"]').forEach((n) => { n.innerHTML = CATS.mruczek(); });
+  $('[data-art="start"]').innerHTML = `<div class="actor">${CATS.lampart()}</div><div class="actor">${CATS.emi()}</div><div class="balloons-wrap">${balloons()}</div>`;
+  $$('[data-art="lampart"]').forEach((n) => { n.innerHTML = CATS.lampart(); });
+  $$('[data-art="emi"]').forEach((n) => { n.innerHTML = CATS.emi(); });
   $$('[data-art="pazur"]').forEach((n) => { n.innerHTML = CATS.pazur(); });
   $$('[data-art="luna"]').forEach((n) => { n.innerHTML = CATS.luna(); });
-  $$('[data-art="paczek"]').forEach((n) => { n.innerHTML = CATS.paczek(); });
   $$('[data-art="gift"]').forEach((n) => { n.innerHTML = gift(); });
   $$('[data-art="mouse-envelope"]').forEach((n) => { n.innerHTML = mouse({ envelope: true }); });
   $$('.clue-slot').forEach((n) => { n.innerHTML = paw(); });
@@ -1371,8 +1767,10 @@ function init() {
 
   const NEXT = {
     'btn-cake-next': 'story',
-    'btn-story-next': 'boxes',
-    'btn-boxes-next': 'memory',
+    'btn-story-next': 'passport',
+    'btn-passport-next': 'boxes',
+    'btn-boxes-next': 'jump',
+    'btn-jump-next': 'memory',
     'btn-memory-next': 'chase',
     'btn-chase-next': 'guess',
     'btn-guess-next': 'reveal',

@@ -23,6 +23,7 @@
         <span class="clue-slot" data-slot="0"></span>
         <span class="clue-slot" data-slot="1"></span>
         <span class="clue-slot" data-slot="2"></span>
+        <span class="clue-slot" data-slot="3"></span>
       </div>
       <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true" aria-label="Wycisz dźwięk"></button>
     </header>
@@ -32,9 +33,9 @@
       <section class="scene scene-start" id="start" data-bg="mint">
         <div class="stage stage-start" data-art="start"></div>
         <div class="copy">
-          <p class="eyebrow">Wiadomość specjalna</p>
-          <h1 class="title" data-fill="start-title">Psst… Kotku!</h1>
-          <p class="lead">Koty z całego osiedla mają dla Ciebie małą przygodę. Włącz dźwięk i daj się poprowadzić.</p>
+          <p class="eyebrow">Wiadomość od Lamparta i Emi</p>
+          <h1 class="title" data-fill="start-title">Psst… Zuziu!</h1>
+          <p class="lead">Lampart wrócił z podróży, a Emi przygotowała urodzinową misję. Włącz dźwięk i daj się poprowadzić.</p>
         </div>
         <div class="actions">
           <button class="btn" id="btn-start" type="button">Zaczynamy</button>
@@ -58,19 +59,29 @@
       <section class="scene scene-story" id="story" data-bg="mint" hidden>
         <p class="chapter">Tymczasem na kocim osiedlu…</p>
         <div class="stage stage-story">
-          <div class="actor actor-host" data-art="mruczek"></div>
+          <div class="actor actor-host" data-art="lampart"></div>
           <div class="runner" id="story-mouse" data-art="mouse-envelope" hidden></div>
           <div class="gift-box" data-art="gift"></div>
         </div>
         <div class="talk" data-talk></div>
         <div class="actions">
-          <button class="btn" id="btn-story-next" type="button" hidden>Ruszamy w pościg</button>
+          <button class="btn" id="btn-story-next" type="button" hidden>Pokaż paszport</button>
+        </div>
+      </section>
+
+      <!-- 2b. Paszport Lamparta -->
+      <section class="scene scene-passport" id="passport" data-bg="peach" hidden>
+        <p class="chapter">Paszport Lamparta</p>
+        <div class="passport-wrap" data-fill="passport"></div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-passport-next" type="button" hidden>Ruszamy w pościg</button>
         </div>
       </section>
 
       <!-- 3. Pudełka -->
       <section class="scene scene-boxes" id="boxes" data-bg="lilac" hidden>
-        <p class="chapter">Rozdział 1 z 3 · Pudełka</p>
+        <p class="chapter">Rozdział 1 z 4 · Pudełka</p>
         <div class="stage stage-boxes">
           <div class="actor actor-small" data-art="pazur"></div>
         </div>
@@ -86,9 +97,27 @@
         </div>
       </section>
 
+      <!-- 3b. Skok nad Amazonią -->
+      <section class="scene scene-jump" id="jump" data-bg="sky" hidden>
+        <p class="chapter">Rozdział 2 z 4 · Skok nad Amazonią</p>
+        <div class="jump-head">
+          <div class="actor actor-mini" data-art="lampart"></div>
+          <div class="jump-stats">
+            <p class="stat" id="fish-count" aria-live="polite">Rybki: 0/10</p>
+            <p class="stat stat-alt" id="altitude">3000 m</p>
+          </div>
+        </div>
+        <div class="sky" id="sky" aria-label="Plansza skoku. Przesuwaj palcem w lewo i prawo albo używaj strzałek."></div>
+        <div class="talk" data-talk></div>
+        <div class="actions">
+          <button class="btn" id="btn-jump-start" type="button" hidden>Skaczę!</button>
+          <button class="btn" id="btn-jump-next" type="button" hidden>Dalej</button>
+        </div>
+      </section>
+
       <!-- 4. Memory -->
       <section class="scene scene-memory" id="memory" data-bg="night" hidden>
-        <p class="chapter">Rozdział 2 z 3 · Nocne zwierzaki</p>
+        <p class="chapter">Rozdział 3 z 4 · Pamiątki z podróży</p>
         <div class="memory-head">
           <div class="actor actor-mini luna-moon" data-art="luna"></div>
           <p class="moves" id="moves" aria-live="polite">Ruchy: 0</p>
@@ -102,9 +131,9 @@
 
       <!-- 5. Pościg -->
       <section class="scene scene-chase" id="chase" data-bg="sun" hidden>
-        <p class="chapter">Rozdział 3 z 3 · Pościg</p>
+        <p class="chapter">Rozdział 4 z 4 · Pościg</p>
         <div class="chase-head">
-          <div class="actor actor-mini" data-art="paczek"></div>
+          <div class="actor actor-mini" data-art="emi"></div>
           <div class="catch-meter" id="catch-meter" aria-live="polite"></div>
         </div>
         <div class="garden" id="garden">
@@ -140,10 +169,21 @@
           <h1 class="title">Jedziemy do Energylandii!</h1>
           <div class="ticket-card" data-fill="ticket"></div>
           <p class="lead" data-fill="finale-lead"></p>
-          <div class="crew" data-art="crew"></div>
-          <p class="signoff" data-fill="signoff"></p>
-          <div class="actions">
-            <button class="btn btn-quiet" id="btn-replay" type="button">Zobacz jeszcze raz</button>
+          <div class="invite" id="invite">
+            <p class="invite-q" data-fill="invite-q">Jedziesz ze mną, Zuziu?</p>
+            <div class="invite-btns" id="invite-btns">
+              <button class="btn" id="btn-yes" type="button">Jadę!</button>
+              <button class="btn btn-quiet btn-no" id="btn-no" type="button">Nie</button>
+            </div>
+          </div>
+          <div class="after-yes" id="after-yes" hidden>
+            <p class="eyebrow">Nowa pieczątka w paszporcie</p>
+            <div class="passport-wrap" id="passport-final"></div>
+            <div class="crew" data-art="crew"></div>
+            <p class="signoff" data-fill="signoff"></p>
+            <div class="actions">
+              <button class="btn btn-quiet" id="btn-replay" type="button">Zobacz jeszcze raz</button>
+            </div>
           </div>
         </div>
       </section>
