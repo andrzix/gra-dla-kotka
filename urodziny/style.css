@@ -533,7 +533,7 @@ body[data-scene="story"] .clues {
 }
 
 .memory-grid {
-  width: min(100%, 360px, 56vh);
+  width: min(100%, 340px, 46vh);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
@@ -588,7 +588,7 @@ body[data-scene="story"] .clues {
 /* ---------- 5. Pościg ---------- */
 
 .catch-meter { display: flex; gap: 3px; }
-.pip { width: 30px; height: 30px; color: rgba(42, 30, 63, .18); }
+.pip { width: 22px; height: 22px; color: rgba(42, 30, 63, .18); }
 .pip svg { width: 100%; height: 100%; }
 .pip.on { color: var(--tangerine-deep); animation: slot-pop .45s cubic-bezier(.3, 1.6, .5, 1); }
 
@@ -618,7 +618,7 @@ body[data-scene="story"] .clues {
   left: 0;
   top: 0;
   z-index: 2;
-  width: clamp(66px, 20vw, 88px);
+  width: clamp(56px, 16vw, 72px);
   aspect-ratio: 140 / 100;
   padding: 0;
   border: 0;
@@ -629,7 +629,7 @@ body[data-scene="story"] .clues {
   transition-timing-function: cubic-bezier(.5, 0, .3, 1);
 }
 
-.garden-mouse::before { content: ""; position: absolute; inset: -14px; }
+.garden-mouse::before { content: ""; position: absolute; inset: -6px; }
 .garden-mouse.flip svg { transform: scaleX(-1); }
 .garden-mouse.hit .m-all { animation: squash .22s ease-out; }
 .garden-mouse.dizzy .m-all { animation: dizzy 1s ease-in-out infinite; }

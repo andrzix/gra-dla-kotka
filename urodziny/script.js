@@ -176,6 +176,10 @@ const SFX = {
     s.tone({ f: 1319, t: 0.07, d: 0.16, type: 'square', v: 0.05 });
   },
   bump: (s) => s.tone({ f: 220, to: 110, d: 0.25, type: 'triangle', v: 0.3 }),
+  nope: (s) => {
+    s.tone({ f: 330, d: 0.14, type: 'triangle', v: 0.2 });
+    s.tone({ f: 247, t: 0.14, d: 0.24, type: 'triangle', v: 0.2 });
+  },
   win: (s) => [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach((f, i) => s.tone({ f, t: i * 0.09, d: 0.3, type: 'triangle', v: 0.2 })),
   clue: (s) => [NOTE.G5, NOTE.C6, 1318.5].forEach((f, i) => s.tone({ f, t: i * 0.07, d: 0.4, v: 0.16 })),
   birthday: (s) => {
@@ -743,6 +747,8 @@ const ANIMALS = {
   lew: { name: 'Lew z Afryki', line: '„Pestka mówiła, że tym razem nie leci do Afryki.”', art: () => face({ kind: 'lew', fur: '#F2B14C' }) },
   malpka: { name: 'Małpka z Amazonii', line: '„U-u-a! Do dżungli też nie. Podobno za daleko!”', art: () => face({ kind: 'malpka', fur: '#9C6B3E' }) },
   zabka: { name: 'Żabka z Amazonii', line: '„Kum! Słyszałam, że paszport może zostać w domu.”', art: () => face({ kind: 'zabka', fur: '#7ED36A' }) },
+  lis: { name: 'Lisek', line: '„Pestka mówiła coś o kolejce. I to wcale nie do sklepu.”', art: () => face({ kind: 'lis', fur: C.tangerine }) },
+  panda: { name: 'Panda', line: '„Ja spałam. Ale trzymam kciuki!”', art: () => face({ kind: 'panda', fur: '#FFFFFF' }) },
   hipcio: { name: 'Hipcio', line: '„Parku wodnego nie będzie. Będzie coś szybszego!”', art: () => face({ kind: 'hipcio', fur: '#B8A6D9' }) },
 };
 
@@ -1119,60 +1125,79 @@ SETUP.boxes = async (el, s) => {
   await talk(s, b, [{ who: 'pazur', text: 'Detektyw Pazur, do usług. Pestka kocha pudełka. Prawie tak mocno jak my.' }]);
   tb.classList.add('open');
   Sound.play('squeak');
-  await talk(s, b, [{ who: 'pazur', text: `Widzisz? Siedzi w ${['lewym', 'środkowym', 'prawym'][target]} pudełku. Zaraz je przestawię, a Ty pokażesz, gdzie jest.` }]);
+  await talk(s, b, [{ who: 'pazur', text: `Widzisz? Siedzi w ${['lewym', 'środkowym', 'prawym'][target]} pudełku. Zaraz je przestawię, a Ty pokażesz, gdzie jest. Musisz ją znaleźć dwa razy.` }]);
+
+  const ROUNDS = [
+    { swaps: 11, start: 460, min: 220, intro: 'Uwaga… przestawiam!', ask: 'No to w którym pudełku jest Pestka?' },
+    { swaps: 16, start: 360, min: 160, intro: 'Runda druga. Teraz nie będę się oszczędzał!', ask: 'I jak? Gdzie jest teraz?' },
+  ];
+  const kittenLines = shuffle(['Miau! Tu tylko ja.', 'Zajęte! To moje pudełko.', 'Nie ma myszy. Jest drzemka.', 'Pudło! Dosłownie.']);
+  let misses = 0, round = 0, pickResolve = null;
+  s.on(shell, 'click', (e) => {
+    const bx = e.target.closest('.box');
+    if (!bx || bx.disabled || !pickResolve) return;
+    const done = pickResolve;
+    pickResolve = null;
+    done(boxes.indexOf(bx));
+  });
 
   showBtn(btnShuffle);
   await clickOnce(s, btnShuffle);
   btnShuffle.hidden = true;
-  tb.classList.remove('open');
-  say(s, b, { who: 'pazur', text: 'Uwaga… przestawiam!' });
-  await s.wait(550);
 
-  let dur = 540;
-  for (let k = 0; k < 9; k++) {
-    const i = Math.floor(Math.random() * 3);
-    let j = Math.floor(Math.random() * 2);
-    if (j >= i) j += 1;
-    [slotOf[i], slotOf[j]] = [slotOf[j], slotOf[i]];
-    shell.style.setProperty('--speed', `${dur}ms`);
-    boxes[i].style.setProperty('--slot', slotOf[i]);
-    boxes[j].style.setProperty('--slot', slotOf[j]);
-    boxes[i].style.setProperty('--lift', '-26px');
-    boxes[j].style.setProperty('--lift', '8px');
-    Sound.play('swoosh');
-    await s.wait(dur / 2);
-    boxes[i].style.setProperty('--lift', '0px');
-    boxes[j].style.setProperty('--lift', '0px');
-    await s.wait(dur / 2 + 40);
-    dur = Math.max(250, dur * 0.88);
-  }
+  while (round < ROUNDS.length) {
+    const cfg = ROUNDS[round];
+    boxes.forEach((bx) => bx.classList.remove('open'));
+    say(s, b, { who: 'pazur', text: cfg.intro });
+    await s.wait(650);
 
-  await s.wait(250);
-  shell.classList.add('picking');
-  boxes.forEach((bx) => { bx.disabled = false; });
-  say(s, b, { who: 'pazur', text: 'No to w którym pudełku jest Pestka?' });
+    let dur = cfg.start;
+    for (let k = 0; k < cfg.swaps; k++) {
+      const i = Math.floor(Math.random() * 3);
+      let j = Math.floor(Math.random() * 2);
+      if (j >= i) j += 1;
+      [slotOf[i], slotOf[j]] = [slotOf[j], slotOf[i]];
+      shell.style.setProperty('--speed', `${Math.round(dur)}ms`);
+      boxes[i].style.setProperty('--slot', slotOf[i]);
+      boxes[j].style.setProperty('--slot', slotOf[j]);
+      boxes[i].style.setProperty('--lift', '-26px');
+      boxes[j].style.setProperty('--lift', '8px');
+      Sound.play('swoosh');
+      await s.wait(dur / 2);
+      boxes[i].style.setProperty('--lift', '0px');
+      boxes[j].style.setProperty('--lift', '0px');
+      await s.wait(dur / 2 + 30);
+      dur = Math.max(cfg.min, dur * 0.86);
+    }
 
-  const kittenLines = shuffle(['Miau! Tu tylko ja.', 'Zajęte! To moje pudełko.', 'Nie ma myszy. Jest drzemka.']);
-  let misses = 0;
-  await new Promise((resolve) => {
-    boxes.forEach((bx, i) => s.on(bx, 'click', () => {
-      if (bx.disabled) return;
-      bx.disabled = true;
-      if (i === target) {
-        boxes.forEach((o) => { o.disabled = true; });
-        shell.classList.remove('picking');
-        bx.classList.add('open');
-        Sound.play('squeak');
-        resolve();
-        return;
-      }
-      const kitten = pick(KITTENS);
-      $('.peek', bx).innerHTML = kitten();
+    await s.wait(200);
+    shell.classList.add('picking');
+    boxes.forEach((bx) => { bx.disabled = false; });
+    say(s, b, { who: 'pazur', text: cfg.ask });
+    const picked = await new Promise((resolve) => { pickResolve = resolve; });
+    boxes.forEach((o) => { o.disabled = true; });
+    shell.classList.remove('picking');
+    const bx = boxes[picked];
+
+    if (picked === target) {
       bx.classList.add('open');
-      say(s, b, { who: 'kociak', text: kittenLines[misses % kittenLines.length], art: kitten });
-      misses += 1;
-    }));
-  });
+      Sound.play('squeak');
+      round += 1;
+      if (round < ROUNDS.length) {
+        await talk(s, b, [{ who: 'pestka', text: 'Pi! To był fart! Zobaczymy, czy trafisz jeszcze raz.' }]);
+      }
+      continue;
+    }
+
+    const kitten = pick(KITTENS);
+    $('.peek', bx).innerHTML = kitten();
+    bx.classList.add('open');
+    await talk(s, b, [{ who: 'kociak', text: kittenLines[misses % kittenLines.length], art: kitten }]);
+    misses += 1;
+    tb.classList.add('open');
+    Sound.play('squeak');
+    await talk(s, b, [{ who: 'pazur', text: 'Pestka siedziała tutaj. Patrz uważniej, przestawiam od nowa!' }]);
+  }
 
   await talk(s, b, [{ who: 'pestka', text: 'Pi! Znalazłaś mnie! Ale i tak mnie nie złapiesz!' }]);
   tb.classList.add('escape');
@@ -1189,7 +1214,7 @@ SETUP.boxes = async (el, s) => {
 SETUP.jump = async (el, s) => {
   const sky = $('#sky'), countEl = $('#fish-count'), altEl = $('#altitude');
   const btnStart = $('#btn-jump-start'), next = $('#btn-jump-next');
-  const NEED = 10;
+  const NEED = 15;
   btnStart.hidden = true;
   next.hidden = true;
   sky.className = 'sky';
@@ -1198,7 +1223,7 @@ SETUP.jump = async (el, s) => {
   let fish = 0;
   const render = () => {
     countEl.textContent = `Rybki: ${fish}/${NEED}`;
-    altEl.textContent = `${Math.max(0, 3000 - fish * 300)} m`;
+    altEl.textContent = `${Math.round(3000 * (1 - fish / NEED))} m`;
   };
   render();
 
@@ -1212,7 +1237,7 @@ SETUP.jump = async (el, s) => {
   const b = bubble(el);
   await talk(s, b, [
     { who: 'lampart', text: 'Pestka odleciała nad Amazonię. Znam te okolice: kiedyś skoczyłem tu ze spadochronem prosto w dżunglę.' },
-    { who: 'lampart', text: `Skaczemy za nią! Przesuwaj palcem w lewo i w prawo, łap rybki i omijaj tukany. Potrzebujemy ${NEED} rybek na drogę.` },
+    { who: 'lampart', text: `Skaczemy za nią! Przesuwaj palcem w lewo i w prawo, łap rybki i omijaj tukany. Potrzebujemy ${NEED} rybek, a każdy tukan zabiera dwie!` },
   ]);
   showBtn(btnStart);
   await clickOnce(s, btnStart);
@@ -1232,13 +1257,13 @@ SETUP.jump = async (el, s) => {
   });
 
   const items = [];
-  const ouch = ['Au! Tukan!', 'Ej, to mój spadochron!', 'Tukany nie mają pierwszeństwa!'];
+  const ouch = ['Au! Tukan! Zgubiłem dwie rybki!', 'Ej, to mój spadochron!', 'Tukany nie mają pierwszeństwa!', 'Moje rybki! Oddawaj!'];
   let spawnIn = 0.3, cloudIn = 0, stunned = 0, elapsed = 0, ended = false, last = performance.now(), ouchIdx = 0;
   let landed;
   const finished = new Promise((resolve) => { landed = resolve; });
 
   const spawn = () => {
-    const isFish = Math.random() < 0.66;
+    const isFish = Math.random() < (elapsed > 70 ? 0.66 : 0.54);
     const size = isFish ? 46 : 58;
     const node = document.createElement('div');
     node.className = `drop ${isFish ? 'fish' : 'bird'}`;
@@ -1247,7 +1272,7 @@ SETUP.jump = async (el, s) => {
     sky.append(node);
     const vx = isFish ? 0 : rand(-45, 45);
     if (vx < 0) node.classList.add('flip');
-    items.push({ node, isFish, size, vx, x: rand(size / 2 + 4, W() - size / 2 - 4), y: H() + 30, speed: rand(125, 155) + elapsed * 2.2, r: size * (isFish ? 0.38 : 0.28), hit: false });
+    items.push({ node, isFish, size, vx, x: rand(size / 2 + 4, W() - size / 2 - 4), y: H() + 30, speed: rand(165, 205) + Math.min(elapsed, 60) * 3.5, r: size * (isFish ? 0.34 : 0.32), hit: false });
   };
 
   const cloud = () => {
@@ -1268,12 +1293,12 @@ SETUP.jump = async (el, s) => {
     elapsed += dt;
     spawnIn -= dt;
     cloudIn -= dt;
-    if (spawnIn <= 0) { spawn(); spawnIn = rand(0.5, 0.8); }
+    if (spawnIn <= 0) { spawn(); spawnIn = rand(0.4, 0.66); }
     if (cloudIn <= 0) { cloud(); cloudIn = rand(0.7, 1.2); }
 
     const prevX = x;
     if (stunned > 0) stunned -= dt;
-    else x += (tx - x) * Math.min(1, dt * 9);
+    else x += (tx - x) * Math.min(1, dt * 6.5);
     const vx = (x - prevX) / Math.max(dt, 0.001);
     const wobble = stunned > 0 ? Math.sin(now / 45) * 14 : 0;
     place(Math.max(-16, Math.min(16, -vx * 0.04)) + wobble);
@@ -1305,7 +1330,9 @@ SETUP.jump = async (el, s) => {
           continue;
         }
         if (stunned <= 0) {
-          stunned = 0.8;
+          stunned = 1;
+          fish = Math.max(0, fish - 2);
+          render();
           Sound.play('bump');
           if (navigator.vibrate) navigator.vibrate(60);
           say(s, b, { who: 'lampart', text: ouch[ouchIdx++ % ouch.length] });
@@ -1343,15 +1370,22 @@ SETUP.jump = async (el, s) => {
 
 SETUP.memory = async (el, s) => {
   const grid = $('#memory-grid'), movesEl = $('#moves'), next = $('#btn-memory-next');
+  const LIMIT = 22;
   next.hidden = true;
   const keys = Object.keys(ANIMALS);
-  const deck = shuffle([...keys, ...keys]);
-  grid.innerHTML = deck.map((k, i) => `<button class="card" type="button" data-animal="${k}" aria-label="Karta ${i + 1}, zakryta">
-    <span class="card-inner"><span class="card-back">${paw()}</span><span class="card-face">${ANIMALS[k].art()}</span></span></button>`).join('');
-  movesEl.textContent = 'Ruchy: 0';
-
   let moves = 0, pairs = 0, first = null, locked = true, allFound;
   const done = new Promise((resolve) => { allFound = resolve; });
+
+  const deal = () => {
+    const deck = shuffle([...keys, ...keys]);
+    grid.innerHTML = deck.map((k, i) => `<button class="card" type="button" data-animal="${k}" aria-label="Karta ${i + 1}, zakryta">
+      <span class="card-inner"><span class="card-back">${paw()}</span><span class="card-face">${ANIMALS[k].art()}</span></span></button>`).join('');
+    moves = 0;
+    pairs = 0;
+    first = null;
+    movesEl.textContent = `Ruchy: 0/${LIMIT}`;
+  };
+  deal();
   const b = bubble(el);
 
   s.on(grid, 'click', (e) => {
@@ -1364,7 +1398,7 @@ SETUP.memory = async (el, s) => {
     if (!first) { first = card; return; }
 
     moves += 1;
-    movesEl.textContent = `Ruchy: ${moves}`;
+    movesEl.textContent = `Ruchy: ${moves}/${LIMIT}`;
     const a = first;
     first = null;
     if (a.dataset.animal === k) {
@@ -1376,23 +1410,34 @@ SETUP.memory = async (el, s) => {
       pairs += 1;
       Sound.play('pop');
       say(s, b, { who: k, text: ANIMALS[k].line });
-      if (pairs === keys.length) allFound();
-    } else {
-      locked = true;
-      s.after(800, () => {
-        [a, card].forEach((c, n) => {
-          c.classList.remove('flipped');
-          c.setAttribute('aria-label', `Karta ${[...grid.children].indexOf(c) + 1}, zakryta`);
-          if (n === 0) Sound.play('flip');
-        });
-        locked = false;
-      });
+      if (pairs === keys.length) { locked = true; allFound(); }
+      else if (moves >= LIMIT) reset();
+      return;
     }
+    locked = true;
+    s.after(650, () => {
+      [a, card].forEach((c, n) => {
+        c.classList.remove('flipped');
+        c.setAttribute('aria-label', `Karta ${[...grid.children].indexOf(c) + 1}, zakryta`);
+        if (n === 0) Sound.play('flip');
+      });
+      if (moves >= LIMIT) reset();
+      else locked = false;
+    });
   });
+
+  const reset = async () => {
+    locked = true;
+    Sound.play('nope');
+    await talk(s, b, [{ who: 'luna', text: `Ojej, ${LIMIT} ruchów minęło i zwierzaki się rozbiegły! Tasuję karty, spróbuj jeszcze raz.` }]);
+    deal();
+    locked = false;
+    say(s, b, { who: 'luna', text: `Masz ${LIMIT} ruchów na ${keys.length} par. Zapamiętuj, gdzie kto siedzi!` });
+  };
 
   await talk(s, b, [{ who: 'luna', text: 'Jestem Luna. Nocą zbierają się tu zwierzaki, które Lampart poznał w podróżach. Wszystkie widziały Pestkę.' }]);
   locked = false;
-  say(s, b, { who: 'luna', text: 'Odkrywaj karty i dobieraj pary. Każda para coś Ci powie.' });
+  say(s, b, { who: 'luna', text: `Dobierz ${keys.length} par w najwyżej ${LIMIT} ruchach, inaczej zwierzaki się rozbiegną.` });
   await done;
 
   await s.wait(900);
@@ -1408,7 +1453,7 @@ SETUP.memory = async (el, s) => {
 SETUP.chase = async (el, s) => {
   const garden = $('#garden'), mouseBtn = $('#garden-mouse'), meter = $('#catch-meter');
   const btnStart = $('#btn-chase-start'), next = $('#btn-chase-next');
-  const NEED = 5;
+  const NEED = 8;
   btnStart.hidden = true;
   next.hidden = true;
   $$('.paw-stamp, .decor', garden).forEach((n) => n.remove());
@@ -1433,13 +1478,13 @@ SETUP.chase = async (el, s) => {
   const b = bubble(el);
   await talk(s, b, [
     { who: 'emi', text: 'Mrau! Jestem Emi, bengalska łowczyni. Myszy to moja specjalność, ale dziś polujesz Ty.' },
-    { who: 'emi', text: `Pestka biega po ogrodzie. Złap ją ${NEED} razy, to się podda. Ja kibicuję!` },
+    { who: 'emi', text: `Pestka biega po ogrodzie. Złap ją ${NEED} razy, to się podda. Uważaj: co czwarte pudło zabiera jedną łapkę!` },
   ]);
   showBtn(btnStart);
   await clickOnce(s, btnStart);
   btnStart.hidden = true;
 
-  let caught = 0, period = 1250, cooldown = false, running = true, timer = null;
+  let caught = 0, period = 950, cooldown = false, running = true, timer = null, misses = 0;
   let pos = { x: 0, y: 0 };
 
   const stamp = (x, y, hit) => {
@@ -1464,7 +1509,7 @@ SETUP.chase = async (el, s) => {
     } while (tries < 14 && Math.hypot(x - pos.x, y - pos.y) < W * 0.35);
     mouseBtn.classList.toggle('flip', x < pos.x);
     pos = { x, y };
-    mouseBtn.style.transitionDuration = instant ? '0ms' : `${Math.round(period * 0.42)}ms`;
+    mouseBtn.style.transitionDuration = instant ? '0ms' : `${Math.round(period * 0.34)}ms`;
     mouseBtn.style.transform = `translate(${x}px, ${y}px)`;
   };
 
@@ -1479,7 +1524,8 @@ SETUP.chase = async (el, s) => {
 
   let finished;
   const over = new Promise((resolve) => { finished = resolve; });
-  const taunts = ['Pi! To był fart!', 'Pi-pi! Nie złapiesz mnie!', 'Ojej, prawie! Szybciej, łapki!', 'Pi… zaczynam się męczyć.'];
+  const taunts = ['Pi! To był fart!', 'Pi-pi! Nie złapiesz mnie!', 'Teraz przyspieszam!', 'Ojej, prawie! Szybciej, łapki!', 'Pi! Jestem jak błyskawica!', 'Pi… zaczynam się męczyć.', 'Jeszcze tylko raz mi się uda uciec!'];
+  const missLines = ['Pudło! Pi-pi!', 'Tu mnie nie ma!', 'Za wolno, kotku!'];
 
   const onCatch = (clientX, clientY) => {
     if (!running || cooldown) return;
@@ -1499,9 +1545,9 @@ SETUP.chase = async (el, s) => {
       finished();
       return;
     }
-    say(s, b, { who: 'pestka', text: taunts[caught - 1] });
-    period = Math.max(620, period - 150);
-    s.after(160, () => { move(); schedule(); });
+    say(s, b, { who: 'pestka', text: taunts[(caught - 1) % taunts.length] });
+    period = Math.max(430, period - 75);
+    s.after(90, () => { move(); schedule(); });
   };
 
   s.on(mouseBtn, 'pointerdown', (e) => {
@@ -1519,6 +1565,13 @@ SETUP.chase = async (el, s) => {
     const g = garden.getBoundingClientRect();
     stamp(e.clientX - g.left, e.clientY - g.top, false);
     Sound.play('tap');
+    misses += 1;
+    if (misses % 4 === 0 && caught > 0) {
+      caught -= 1;
+      $$('.pip', meter).forEach((p, i) => p.classList.toggle('on', i < caught));
+      meter.setAttribute('aria-label', `Złapana ${caught} z ${NEED}`);
+      say(s, b, { who: 'pestka', text: `${missLines[(misses / 4 - 1) % missLines.length]} Jedna łapka mniej!` });
+    }
   });
 
   mouseBtn.hidden = false;
